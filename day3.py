@@ -20,3 +20,11 @@ def santa_run(directions):
         houses.add(position)
 
     return len(houses)
+
+
+def main():
+    with open('day3input.txt') as f:
+        print(santa_run(f.read()))
+
+if __name__ == '__main__':
+    main()
