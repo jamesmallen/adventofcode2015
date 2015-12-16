@@ -7,31 +7,28 @@ digitMap = {
   'f': '5'
   'g': '6'
   'h': '7'
-  'i': '8'
-  'j': '9'
-  'k': 'a'
-  'l': 'b'
-  'm': 'c'
-  'n': 'd'
-  'o': 'e'
-  'p': 'f'
-  'q': 'g'
-  'r': 'h'
-  's': 'i'
-  't': 'j'
-  'u': 'k'
-  'v': 'l'
-  'w': 'm'
-  'x': 'n'
-  'y': 'o'
-  'z': 'p'
+  'j': '8'
+  'k': '9'
+  'm': 'a'
+  'n': 'b'
+  'p': 'c'
+  'q': 'd'
+  'r': 'e'
+  's': 'f'
+  't': 'g'
+  'u': 'h'
+  'v': 'i'
+  'w': 'j'
+  'x': 'k'
+  'y': 'l'
+  'z': 'm'
 }
 
-# looseDigitMap = {
-#   'i': '8'
-#   'l': 'a'
-#   'o': 'c'
-# }
+looseDigitMap = {
+  'i': '8'
+  'l': 'a'
+  'o': 'c'
+}
 
 reverseDigitMap = {}
 for key, value of digitMap
@@ -44,14 +41,31 @@ pad = (s, size, c='0') ->
     s = c + s
   return s
 
+rpad = (s, size, c='0') ->
+  c = c.toString()
+  s = s.toString()
+  while (s.length < size)
+    s = s + c
+  return s
+
+
 numberToPassword = (n) ->
-  s = pad(n.toString(26), 8, '0')
+  s = pad(n.toString(23), 8, '0')
   s = (reverseDigitMap[c] for c in s).join('')
   return s
 
 passwordToNumber = (s) ->
-  n = (digitMap[c] || looseDigitMap[c] for c in s).join('')
-  n = parseInt(n, 26)
+  t = ''
+  for c in s
+    if digitMap[c]?
+      t += digitMap[c]
+    else
+      t += looseDigitMap[c]
+      t = rpad(t, s.length, '0')
+      break
+
+  # n = (digitMap[c] || looseDigitMap[c] for c in t).join('')
+  n = parseInt(t, 23)
   return n
 
 hasStraight = (s, runLength = 3) ->
@@ -79,7 +93,7 @@ countPairs = (s) ->
 
 
 hasValidChars = (s) ->
-  return false for c in s when c == 'i' or c == 'l' or c == 'o'
+  return false for c in s when not digitMap[c]?
   return true
 
 
@@ -96,8 +110,6 @@ nextValidpassword = (s) ->
     s = numberToPassword(n)
     if isValidPassword(s)
       return s
-    if n % 1000 == 0
-      console.log(n, s)
     n++
 
 module.exports.isValidPassword = isValidPassword
@@ -108,6 +120,7 @@ module.exports.countPairs = countPairs
 module.exports.digitMap = digitMap
 module.exports.reverseDigitMap = reverseDigitMap
 module.exports.pad = pad
+module.exports.rpad = rpad
 module.exports.numberToPassword = numberToPassword
 module.exports.passwordToNumber = passwordToNumber
 
@@ -118,7 +131,10 @@ main = () ->
   res = ''
 
   rl.on 'line', (line) ->
-    # TODO
+    for [1..2]
+      line = nextValidpassword(line)
+      console.log(line)
+    
 
   rl.on 'close', ->
     # TODO

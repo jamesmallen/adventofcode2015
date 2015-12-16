@@ -4,6 +4,10 @@ expect = chai.expect
 day11 = require '../day11.coffee'
 
 describe 'Day 11', ->
+  it 'should convert passwords to numbers', ->
+    expect(day11.passwordToNumber('aab')).to.be.greaterThan(day11.passwordToNumber('aaa'))
+    expect(day11.passwordToNumber('aai')).to.be.greaterThan(day11.passwordToNumber('aah'))
+    expect(day11.passwordToNumber('aaiaa')).to.be.greaterThan(day11.passwordToNumber('aahaa'))
   it 'should find straight sequences of characters', ->
     validPasswords = [
       'hijklmmn',
