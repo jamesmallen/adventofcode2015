@@ -54,6 +54,22 @@ calculateOptimalArrangement = (deltas) ->
 
   return bestArrangement
 
+deltaRE = /(\w+) would (gain|lose) (\d+) happiness units by sitting next to (\w+)\./
+
+
+buildDeltas = (deltas, line) ->
+  res = line.match(deltaRE)
+  if res
+    person1 = res[1]
+    direction = res[2]
+    amount = res[3]
+    person2 = res[4]
+    multiplier = if direction == 'gain' then 1 else -1
+    if not deltas[person1]?
+      deltas[person1] = {}
+    deltas[person1][person2] = multiplier * amount
+
+
 module.exports.calculateHappiness = calculateHappiness
 module.exports.calculateOptimalArrangement = calculateOptimalArrangement
 
@@ -62,15 +78,25 @@ main = () ->
   rl = require('readline').createInterface(
     input: require('fs').createReadStream('day13input.txt')
   )
-  res = ''
+  deltas = {}
 
   rl.on 'line', (line) ->
-    for [1..2]
-      line = nextValidpassword(line)
-      console.log(line)
-
+    buildDeltas(deltas, line)
 
   rl.on 'close', ->
-    # TODO
+    arrangement = calculateOptimalArrangement(deltas)
+    console.log(arrangement)
+    happiness = calculateHappiness(deltas, arrangement)
+    console.log(happiness)
+
+    deltas['me'] = {}
+    for person, value of deltas
+      deltas['me'][person] = 0
+      deltas[person]['me'] = 0
+    arrangement = calculateOptimalArrangement(deltas)
+    console.log(arrangement)
+    happiness = calculateHappiness(deltas, arrangement)
+    console.log(happiness)
+
 if require.main == module
   main()
