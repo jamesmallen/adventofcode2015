@@ -55,18 +55,19 @@ Recharge = {
 spells = [MagicMissile, Drain, Shield, Poison, Recharge]
 
 
-simFight = (player, boss, attacker=0, manaSpent=0, depth=0, effects=null, nextSpell=null, best=null) ->
+simFight = (player, boss, attacker=0, manaSpent=0, depth=0, effects=null, nextSpell=null, best=null, difficulty='normal') ->
   players = [Object.assign({}, player), Object.assign({}, boss)]
   effects = if effects? then (Object.assign({}, effect) for effect in effects) else []
   defender = (attacker + 1) % 2
   best = best ? Number.POSITIVE_INFINITY
   nameOfPlayer = if attacker == 0 then 'Player' else 'Boss'
-  indent = '\t'.repeat(depth)
+  indent = ' '.repeat(depth)
 
   if nextSpell?
     players[0].hp += nextSpell.heal ? 0
     players[1].hp -= nextSpell.damage ? 0
     players[0].mana -= nextSpell.cost
+    manaSpent += nextSpell.cost
     if nextSpell.effect?
       if nextSpell.effect.onStart?
         nextSpell.effect.onStart(players[0], players[1])
@@ -75,6 +76,13 @@ simFight = (player, boss, attacker=0, manaSpent=0, depth=0, effects=null, nextSp
   # console.log("#{indent}-- #{nameOfPlayer} turn --")
   # console.log("#{indent}- Player has #{players[0].hp} hp, #{players[0].armor} armor, #{players[0].mana} mana")
   # console.log("#{indent}- Boss has #{players[1].hp} hp")
+
+  if difficulty == 'hard' and attacker == 0
+    players[0].hp--
+    if players[0].hp <= 0
+      # player lost
+      return Number.POSITIVE_INFINITY
+
 
   for effect, i in effects by -1
     if effect.onTurn?
@@ -90,24 +98,23 @@ simFight = (player, boss, attacker=0, manaSpent=0, depth=0, effects=null, nextSp
 
   if attacker == 0
     # player turn - cast magic
-    if players[0].hp <= 0 or players[0].mana < 53
+    if players[0].hp <= 0
       # player lost
       return Number.POSITIVE_INFINITY
 
     for spell in spells
-      if spell.cost < players[0].mana and manaSpent + spell.cost < best
+      if spell.cost <= players[0].mana and manaSpent + spell.cost < best and effects.every((a) -> a.name != spell.name)
         # console.log("#{indent}Player casts #{spell.name}")
-        cost = simFight(players[0], players[1], defender, manaSpent + spell.cost, depth + 1, effects, spell, best)
+        cost = simFight(players[0], players[1], defender, manaSpent, depth + 1, effects, spell, best, difficulty)
         if cost < best
-          console.log('Best so far:', best)
+          # console.log(indent + 'Best so far:', best, cost)
           best = cost
-
   else
     # boss turn
     if players[1].hp <= 0
       return manaSpent
     players[defender].hp -= Math.max(1, players[attacker].damage - players[defender].armor)
-    best = simFight(players[0], players[1], defender, manaSpent, depth + 1, effects, null, best)
+    best = simFight(players[0], players[1], defender, manaSpent, depth + 1, effects, null, best, difficulty)
 
   return best
 
@@ -137,7 +144,8 @@ main = () ->
       boss.damage = parseInt(res[1])
 
   rl.on 'close', ->
-    console.log(simFight(player, boss))
+    console.log(simFight(player, boss, 0, 0, 0, null, null, null, 'normal'))
+    console.log(simFight(player, boss, 0, 0, 0, null, null, null, 'hard'))
     # console.log(simFight({armor: 0, hp: 10, mana: 250}, {hp: 13, damage: 8}))
     # console.log(simFight({armor: 0, hp: 10, mana: 250}, {hp: 14, damage: 8}))
 
